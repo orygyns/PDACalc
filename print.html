@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDA Calculation Summary</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --text-main: #111827;
+            --text-muted: #4b5563;
+            --border-color: #d1d5db;
+            --bg-subtotal: #f3f4f6;
+            --bg-total: #e5e7eb;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f9fafb;
+            color: var(--text-main);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Top Action Bar (Screen Only) */
+        .action-bar {
+            max-width: 210mm; /* A4 Width */
+            margin: 2rem auto 1rem auto;
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            padding: 0 1rem;
+        }
+
+        button {
+            padding: 0.6rem 1.25rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            font-family: inherit;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+            background-color: white;
+            color: var(--text-main);
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        button:hover {
+            background-color: #f3f4f6;
+        }
+
+        button.primary {
+            background-color: #111827;
+            color: white;
+            border-color: #111827;
+        }
+
+        button.primary:hover {
+            background-color: #374151;
+        }
+
+        /* Document Container (A4 styling on screen) */
+        .document-wrapper {
+            max-width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto 2rem auto;
+            background: white;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            padding: 40px 50px;
+        }
+
+        /* Minimal Header Section */
+        .doc-header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+            border-bottom: 2px solid var(--text-main);
+            padding-bottom: 1.5rem;
+        }
+
+        .doc-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.25rem;
+        }
+
+        .doc-subtitle {
+            font-size: 1rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        /* Basic Details Section */
+        .details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+            font-size: 1rem;
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .detail-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+        }
+
+        .detail-value {
+            font-size: 1.15rem;
+            font-weight: 700;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.25rem;
+            margin-top: 0.25rem;
+        }
+
+        /* Table Styling */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 2rem;
+        }
+
+        th, td {
+            border: 1px solid var(--text-main);
+            padding: 0.85rem 1rem;
+            text-align: left;
+        }
+
+        th {
+            background-color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.05em;
+        }
+
+        td.amount, th.amount {
+            text-align: right;
+        }
+
+        td.amount {
+            font-variant-numeric: tabular-nums;
+        }
+
+        tr.row-subtotal td {
+            background-color: var(--bg-subtotal);
+            font-weight: 600;
+        }
+
+        tr.row-total td {
+            background-color: var(--bg-total);
+            font-weight: 700;
+            font-size: 1.15rem;
+            text-transform: uppercase;
+        }
+
+        /* Disclaimer */
+        .disclaimer {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-style: italic;
+            border-left: 3px solid var(--border-color);
+            padding-left: 1rem;
+            margin-top: 1rem;
+        }
+
+        /* Error Message State */
+        #error-state {
+            display: none;
+            text-align: center;
+            padding: 4rem 2rem;
+            background: white;
+            max-width: 600px;
+            margin: 4rem auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        #error-state h2 { margin-bottom: 1rem; color: #dc2626; }
+        
+        /* Print Styles */
+        @media print {
+            @page {
+                size: A4;
+                margin: 15mm;
+            }
+
+            body {
+                background-color: white;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .action-bar {
+                display: none !important;
+            }
+
+            .document-wrapper {
+                box-shadow: none;
+                margin: 0;
+                padding: 0;
+                min-height: auto;
+                max-width: 100%;
+            }
+
+            /* Ensure backgrounds print */
+            tr.row-subtotal td { background-color: var(--bg-subtotal) !important; }
+            tr.row-total td { background-color: var(--bg-total) !important; }
+            th, td { border: 1px solid #000; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="action-bar" id="actionBar">
+        <button onclick="goBack()">⬅ Back to Calculator</button>
+        <button class="primary" onclick="window.print()">🖨️ Print / Save PDF</button>
+    </div>
+
+    <div id="error-state">
+        <h2>⚠️ No PDA Data Found</h2>
+        <p>There is no calculated data to print. Please return to the calculator and generate a PDA first.</p>
+        <br>
+        <button class="primary" onclick="goBack()">Go to Calculator</button>
+    </div>
+
+    <div class="document-wrapper" id="printDocument">
+        
+        <header class="doc-header">
+            <div class="doc-title">Proforma Disbursement Account</div>
+            <div class="doc-subtitle">Calculation Summary</div>
+        </header>
+
+        <section class="details-grid">
+            <div class="detail-item">
+                <span class="detail-label">Vessel Name</span>
+                <span class="detail-value" id="docVessel"></span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Port of Call</span>
+                <span class="detail-value" id="docPort"></span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Date Generated</span>
+                <span class="detail-value" id="docDate"></span>
+            </div>
+        </section>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Charge Type</th>
+                    <th class="amount">Amount (INR)</th>
+                </tr>
+            </thead>
+            <tbody id="docTableBody">
+                </tbody>
+        </table>
+
+        <div class="disclaimer">
+            Values are system-generated estimates for verification purposes.
+        </div>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            loadAndRenderData();
+        });
+
+        function loadAndRenderData() {
+            const rawData = localStorage.getItem('pdaResult');
+            const errorState = document.getElementById('error-state');
+            const printDoc = document.getElementById('printDocument');
+            const actionBar = document.getElementById('actionBar');
+
+            // Handle Missing Data
+            if (!rawData) {
+                errorState.style.display = 'block';
+                printDoc.style.display = 'none';
+                actionBar.style.display = 'none';
+                return;
+            }
+
+            try {
+                const data = JSON.parse(rawData);
+                
+                // Set up INR Currency Formatter
+                const formatter = new Intl.NumberFormat('en-IN', {
+                    style: 'currency',
+                    currency: 'INR',
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+
+                // Populate Top Details
+                const dateText = data.date ? data.date : new Date().toLocaleDateString('en-GB');
+                document.getElementById('docDate').textContent = dateText;
+                document.getElementById('docVessel').textContent = data.vesselName || 'N/A';
+                document.getElementById('docPort').textContent = data.portName || 'N/A';
+
+                // Populate Table
+                const tbody = document.getElementById('docTableBody');
+                tbody.innerHTML = '';
+
+                // Generate Breakdown Rows
+                if (data.breakdown && Array.isArray(data.breakdown)) {
+                    data.breakdown.forEach(item => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${item.name}</td>
+                            <td class="amount">${formatter.format(item.amount || 0)}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                }
+
+                // Subtotal Row
+                const trSub = document.createElement('tr');
+                trSub.className = 'row-subtotal';
+                trSub.innerHTML = `
+                    <td>Subtotal</td>
+                    <td class="amount">${formatter.format(data.subtotal || 0)}</td>
+                `;
+                tbody.appendChild(trSub);
+
+                // GST Row
+                const trGst = document.createElement('tr');
+                trGst.innerHTML = `
+                    <td>GST (18%)</td>
+                    <td class="amount">${formatter.format(data.gstAmt || 0)}</td>
+                `;
+                tbody.appendChild(trGst);
+
+                // Total Row
+                const trTotal = document.createElement('tr');
+                trTotal.className = 'row-total';
+                trTotal.innerHTML = `
+                    <td>TOTAL</td>
+                    <td class="amount">${formatter.format(data.totalAmount || 0)}</td>
+                `;
+                tbody.appendChild(trTotal);
+
+            } catch (error) {
+                console.error("Failed to parse PDA data:", error);
+                errorState.style.display = 'block';
+                printDoc.style.display = 'none';
+                actionBar.style.display = 'none';
+            }
+        }
+
+        function goBack() {
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>
